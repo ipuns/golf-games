@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Wolf</title>
+<style>
+  :root {
+    --paper: #EAE3C9;
+    --paper-deep: #DDD1A8;
+    --felt: #142219;
+    --ink: #23301D;
+    --ink-soft: #4C5A3F;
+    --rule: #B7AD86;
+    --gold: #96692A;
+    --gold-ink: #FFF6E6;
+    --flash: #F0D695;
+    --radius: 6px;
+    --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--felt);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 28px 16px 60px;
+  }
+
+  main.sheet {
+    width: 100%;
+    max-width: 420px;
+    background: var(--paper);
+    border-radius: var(--radius);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+    padding: 28px 24px 24px;
+  }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: 0.2px;
+  }
+
+  .tagline {
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  hr.rule {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 18px 0;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .row:last-child { border-bottom: none; }
+
+  .name {
+    flex: 1;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1px dotted transparent;
+    padding: 4px 0;
+    min-width: 0;
+  }
+
+  .name:focus {
+    outline: none;
+    border-bottom: 1px dotted var(--ink-soft);
+  }
+
+  .score {
+    width: 4.2rem;
+    text-align: right;
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    padding: 2px 0;
+    -moz-appearance: textfield;
+  }
+
+  .score::-webkit-outer-spin-button,
+  .score::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .score:focus {
+    outline: none;
+    border-bottom: 1px dotted var(--ink-soft);
+  }
+
+  .score.leader { color: var(--gold); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .score { transition: background-color 0.6s ease; }
+  }
+
+  .score.flash { background-color: var(--flash); }
+
+  h2 {
+    font-family: var(--font-sans);
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .hint {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+  }
+
+  .hole-row {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .hole-row:last-of-type { border-bottom: none; }
+
+  .hole-row-name {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .hole-row .hint {
+    margin: 6px 0 0;
+  }
+
+  .hidden { display: none; }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+  }
+
+  .chips input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  .chips label {
+    flex: 1;
+    text-align: center;
+    padding: 10px 6px;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--ink);
+    background: var(--paper-deep);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .chips input:checked + label {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--gold-ink);
+  }
+
+  .chips input:focus-visible + label {
+    outline: 2px solid var(--ink);
+    outline-offset: 1px;
+  }
+
+  .wolf-pill {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--paper-deep);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .wolf-pill:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  button#add-hole {
+    width: 100%;
+    margin-top: 4px;
+    padding: 13px;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold-ink);
+    background: var(--gold);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  button#add-hole:disabled {
+    background: #B7AD86;
+    color: #F4EFDD;
+    cursor: not-allowed;
+  }
+
+  button#add-hole:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  .feedback {
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  .link-inline {
+    font: inherit;
+    color: var(--gold);
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  details {
+    margin-top: 18px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  details summary {
+    cursor: pointer;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  details ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+  }
+
+  details li { margin-bottom: 4px; }
+
+  button#reset-btn {
+    display: block;
+    margin: 22px auto 0;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 6px;
+  }
+</style>
+</head>
+<body>
+
+<main class="sheet">
+  <header>
+    <h1>Wolf</h1>
+    <p class="tagline">One Wolf each hole. The trailing player stays at zero.</p>
+  </header>
+
+  <div class="hole-row">
+    <div class="hole-row-name">Players</div>
+    <div class="chips" role="radiogroup" aria-label="Number of players">
+      <input type="radio" name="player-count" id="count-3" value="3" checked><label for="count-3">3 players</label>
+      <input type="radio" name="player-count" id="count-4" value="4"><label for="count-4">4 players</label>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <section aria-label="Current standing">
+    <div class="row">
+      <input class="name" id="name-0" type="text" value="Player 1" aria-label="Player 1 name">
+      <input class="score" id="score-0" type="number" value="0" inputmode="numeric" aria-label="Player 1 score">
+    </div>
+    <div class="row">
+      <input class="name" id="name-1" type="text" value="Player 2" aria-label="Player 2 name">
+      <input class="score" id="score-1" type="number" value="0" inputmode="numeric" aria-label="Player 2 score">
+    </div>
+    <div class="row">
+      <input class="name" id="name-2" type="text" value="Player 3" aria-label="Player 3 name">
+      <input class="score" id="score-2" type="number" value="0" inputmode="numeric" aria-label="Player 3 score">
+    </div>
+    <div class="row hidden" id="prow-3">
+      <input class="name" id="name-3" type="text" value="Player 4" aria-label="Player 4 name">
+      <input class="score" id="score-3" type="number" value="0" inputmode="numeric" aria-label="Player 4 score">
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <h2>Record this hole</h2>
+    <p class="hint">Set how the hole played out. The Wolf role moves to the next player automatically.</p>
+
+    <div class="hole-row">
+      <div class="hole-row-name">Wolf this hole</div>
+      <button type="button" id="wolf-indicator" class="wolf-pill" aria-label="Current Wolf, tap to change">Player 1</button>
+      <p class="hint">Tap the name if the rotation needs correcting.</p>
+    </div>
+
+    <div id="entry-3p">
+      <div class="hole-row">
+        <div class="hole-row-name">Wolf's choice</div>
+        <div class="chips" role="radiogroup" aria-label="Wolf's choice this hole">
+          <input type="radio" name="choice3" id="choice3-0" value="1"><label for="choice3-0" id="choice3-label-0">Partner with Player 2</label>
+          <input type="radio" name="choice3" id="choice3-1" value="2"><label for="choice3-1" id="choice3-label-1">Partner with Player 3</label>
+          <input type="radio" name="choice3" id="choice3-2" value="alone"><label for="choice3-2">Go alone</label>
+        </div>
+      </div>
+      <div class="hole-row">
+        <div class="hole-row-name">Result</div>
+        <div class="chips" role="radiogroup" aria-label="Hole result">
+          <input type="radio" name="outcome3" id="outcome3-solo" value="solo"><label for="outcome3-solo" id="outcome3-label-solo">Solo player won</label>
+          <input type="radio" name="outcome3" id="outcome3-team" value="team"><label for="outcome3-team" id="outcome3-label-team">Team won</label>
+          <input type="radio" name="outcome3" id="outcome3-tie" value="tie"><label for="outcome3-tie">Tie</label>
+        </div>
+      </div>
+    </div>
+
+    <div id="entry-4p" class="hidden">
+      <div class="hole-row">
+        <div class="hole-row-name">Wolf's choice</div>
+        <div class="chips" role="radiogroup" aria-label="Wolf's choice this hole">
+          <input type="radio" name="mode4" id="mode4-partner" value="partner"><label for="mode4-partner">Picked a partner</label>
+          <input type="radio" name="mode4" id="mode4-lone" value="lone"><label for="mode4-lone">Went Lone Wolf</label>
+        </div>
+      </div>
+      <div class="hole-row hidden" id="partner-row-4p">
+        <div class="hole-row-name">Partner</div>
+        <div class="chips" role="radiogroup" aria-label="Wolf's partner this hole">
+          <input type="radio" name="partner4" id="partner4-0" value="1"><label for="partner4-0" id="partner4-label-0">Player 2</label>
+          <input type="radio" name="partner4" id="partner4-1" value="2"><label for="partner4-1" id="partner4-label-1">Player 3</label>
+          <input type="radio" name="partner4" id="partner4-2" value="3"><label for="partner4-2" id="partner4-label-2">Player 4</label>
+        </div>
+      </div>
+      <div class="hole-row">
+        <div class="hole-row-name">Result</div>
+        <div class="chips" role="radiogroup" aria-label="Hole result">
+          <input type="radio" name="outcome4" id="outcome4-wolf" value="wolf"><label for="outcome4-wolf" id="outcome4-label-wolf">Wolf's team won</label>
+          <input type="radio" name="outcome4" id="outcome4-other" value="other"><label for="outcome4-other" id="outcome4-label-other">Other team won</label>
+          <input type="radio" name="outcome4" id="outcome4-tie" value="tie"><label for="outcome4-tie">Tie</label>
+        </div>
+      </div>
+    </div>
+
+    <button id="add-hole" disabled>Add to totals</button>
+
+    <p class="feedback" id="feedback" hidden>
+      <span id="feedback-text"></span>
+      <button class="link-inline" id="undo-btn">Undo</button>
+    </p>
+
+    <details id="details-3p">
+      <summary>How points are split (3 players)</summary>
+      <ul>
+        <li>Solo player wins the hole: 6 points.</li>
+        <li>The two-player team wins the hole: 3 points each.</li>
+        <li>Tie: 2 points each.</li>
+        <li>Partnering with someone doesn't protect the Wolf from a solo opponent — it decides who that opponent is.</li>
+      </ul>
+    </details>
+
+    <details id="details-4p" class="hidden">
+      <summary>How points are split (4 players)</summary>
+      <ul>
+        <li>Partner picked, that team wins: 2 points each to the Wolf and partner.</li>
+        <li>Partner picked, the other team wins: 3 points each to the other two.</li>
+        <li>Lone Wolf wins: 4 points to the Wolf.</li>
+        <li>Lone Wolf loses: 1 point each to the other three.</li>
+        <li>Tie: no points, but the Wolf role still moves on.</li>
+      </ul>
+    </details>
+  </section>
+
+  <button id="reset-btn">Reset round</button>
+</main>
+
+<script>
+  const nameInputs = [0, 1, 2, 3].map(i => document.getElementById('name-' + i));
+  const scoreInputs = [0, 1, 2, 3].map(i => document.getElementById('score-' + i));
+  const prow3 = document.getElementById('prow-3');
+  const wolfIndicator = document.getElementById('wolf-indicator');
+  const countRadio3 = document.getElementById('count-3');
+  const countRadio4 = document.getElementById('count-4');
+
+  const entry3p = document.getElementById('entry-3p');
+  const choiceRadios3 = [0, 1, 2].map(i => document.getElementById('choice3-' + i));
+  const choiceLabels3 = [0, 1].map(i => document.getElementById('choice3-label-' + i));
+  const outcomeRadios3 = Array.from(document.getElementsByName('outcome3'));
+  const outcomeLabelSolo3 = document.getElementById('outcome3-label-solo');
+  const outcomeLabelTeam3 = document.getElementById('outcome3-label-team');
+  const details3p = document.getElementById('details-3p');
+
+  const entry4p = document.getElementById('entry-4p');
+  const modeRadios4 = Array.from(document.getElementsByName('mode4'));
+  const partnerRow4 = document.getElementById('partner-row-4p');
+  const partnerRadios4 = [0, 1, 2].map(i => document.getElementById('partner4-' + i));
+  const partnerLabels4 = [0, 1, 2].map(i => document.getElementById('partner4-label-' + i));
+  const outcomeRadios4 = Array.from(document.getElementsByName('outcome4'));
+  const outcomeLabelWolf4 = document.getElementById('outcome4-label-wolf');
+  const outcomeLabelOther4 = document.getElementById('outcome4-label-other');
+  const details4p = document.getElementById('details-4p');
+
+  const addBtn = document.getElementById('add-hole');
+  const feedback = document.getElementById('feedback');
+  const feedbackText = document.getElementById('feedback-text');
+  const undoBtn = document.getElementById('undo-btn');
+  const resetBtn = document.getElementById('reset-btn');
+
+  let state = {
+    mode: 3,
+    players: [
+      { name: 'Player 1', score: 0 },
+      { name: 'Player 2', score: 0 },
+      { name: 'Player 3', score: 0 }
+    ],
+    currentWolf: 0
+  };
+  let lastAdd = null;
+  let saveTimer = null;
+
+  function applyStateToDOM() {
+    for (let i = 0; i < 4; i++) {
+      if (i < state.mode) {
+        nameInputs[i].value = state.players[i].name;
+        scoreInputs[i].value = state.players[i].score;
+      }
+    }
+    updateLeaderHighlight();
+    refreshRoleDisplays();
+  }
+
+  function updateLeaderHighlight() {
+    const scores = state.players.map(p => p.score);
+    const max = Math.max(...scores);
+    const allSame = scores.every(s => s === max);
+    for (let i = 0; i < 4; i++) {
+      if (i < state.mode) {
+        const isLeader = !allSame && scores[i] === max && max > 0;
+        scoreInputs[i].classList.toggle('leader', isLeader);
+      } else {
+        scoreInputs[i].classList.remove('leader');
+      }
+    }
+  }
+
+  function refreshRoleDisplays() {
+    wolfIndicator.textContent = state.players[state.currentWolf].name;
+    if (state.mode === 3) {
+      refreshChoiceChips3();
+      const choice = getSelectedChoice3();
+      if (choice !== null) updateOutcomeLabels3(computeAssignment3(choice, state.currentWolf));
+    } else {
+      refreshPartnerChips4();
+    }
+  }
+
+  function renderModeVisibility() {
+    prow3.classList.toggle('hidden', state.mode === 3);
+    entry3p.classList.toggle('hidden', state.mode !== 3);
+    entry4p.classList.toggle('hidden', state.mode !== 4);
+    details3p.classList.toggle('hidden', state.mode !== 3);
+    details4p.classList.toggle('hidden', state.mode !== 4);
+  }
+
+  function fullRender() {
+    (state.mode === 3 ? countRadio3 : countRadio4).checked = true;
+    renderModeVisibility();
+    applyStateToDOM();
+  }
+
+  function normalizeScores() {
+    const scores = state.players.map(p => p.score);
+    const min = Math.min(...scores);
+    if (min !== 0) {
+      state.players.forEach(p => { p.score -= min; });
+    }
+  }
+
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveState, 300);
+  }
+
+  function saveState() {
+    const data = JSON.stringify(state);
+    if (window.storage) {
+      window.storage.set('wolf-state', data, false).catch(e => {
+        console.error('Wolf: could not save state', e);
+      });
+      return;
+    }
+    try {
+      localStorage.setItem('wolf-golf-state', data);
+    } catch (e) {
+      console.error('Wolf: could not save state', e);
+    }
+  }
+
+  function applyLoadedState(raw) {
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.players) && (parsed.players.length === 3 || parsed.players.length === 4)) {
+      state = parsed;
+      state.mode = parsed.mode || parsed.players.length;
+      if (typeof state.currentWolf !== 'number') state.currentWolf = 0;
+      fullRender();
+    }
+  }
+
+  async function loadState() {
+    if (window.storage) {
+      try {
+        const res = await window.storage.get('wolf-state', false);
+        if (res && res.value) applyLoadedState(res.value);
+      } catch (e) {
+        // nothing saved yet
+      }
+      return;
+    }
+    try {
+      const raw = localStorage.getItem('wolf-golf-state');
+      if (raw) applyLoadedState(raw);
+    } catch (e) {
+      // nothing saved yet
+    }
+  }
+
+  // ---- 3-player logic ----
+
+  function refreshChoiceChips3() {
+    const others = [0, 1, 2].filter(i => i !== state.currentWolf);
+    choiceRadios3[0].value = others[0];
+    choiceLabels3[0].textContent = 'Partner with ' + state.players[others[0]].name;
+    choiceRadios3[1].value = others[1];
+    choiceLabels3[1].textContent = 'Partner with ' + state.players[others[1]].name;
+  }
+
+  function computeAssignment3(choice, wolfIdx) {
+    const others = [0, 1, 2].filter(i => i !== wolfIdx);
+    if (choice === 'alone') return { solo: wolfIdx, team: others };
+    const partnerIdx = parseInt(choice, 10);
+    const soloIdx = others.find(i => i !== partnerIdx);
+    return { solo: soloIdx, team: [wolfIdx, partnerIdx] };
+  }
+
+  function updateOutcomeLabels3(assignment) {
+    outcomeLabelSolo3.textContent = state.players[assignment.solo].name + ' won';
+    outcomeLabelTeam3.textContent = assignment.team.map(i => state.players[i].name).join(' & ') + ' won';
+  }
+
+  function getSelectedChoice3() {
+    const c = choiceRadios3.find(r => r.checked);
+    return c ? c.value : null;
+  }
+
+  function getSelectedOutcome3() {
+    const c = outcomeRadios3.find(r => r.checked);
+    return c ? c.value : null;
+  }
+
+  function onChoice3Change() {
+    const choice = getSelectedChoice3();
+    if (choice !== null) updateOutcomeLabels3(computeAssignment3(choice, state.currentWolf));
+    outcomeRadios3.forEach(r => { r.checked = false; });
+    checkReady();
+  }
+
+  function computePoints3(assignment, outcome) {
+    const points = [0, 0, 0];
+    if (outcome === 'tie') {
+      points[0] = points[1] = points[2] = 2;
+    } else if (outcome === 'solo') {
+      points[assignment.solo] = 6;
+    } else {
+      assignment.team.forEach(i => { points[i] = 3; });
+    }
+    return points;
+  }
+
+  choiceRadios3.forEach(r => r.addEventListener('change', onChoice3Change));
+  outcomeRadios3.forEach(r => r.addEventListener('change', checkReady));
+
+  // ---- 4-player logic ----
+
+  function refreshPartnerChips4() {
+    const others = [0, 1, 2, 3].filter(i => i !== state.currentWolf);
+    others.forEach((playerIdx, slot) => {
+      partnerRadios4[slot].value = playerIdx;
+      partnerLabels4[slot].textContent = state.players[playerIdx].name;
+    });
+  }
+
+  function getSelectedMode4() {
+    const c = modeRadios4.find(r => r.checked);
+    return c ? c.value : null;
+  }
+
+  function getSelectedPartner4() {
+    const c = partnerRadios4.find(r => r.checked);
+    return c ? parseInt(c.value, 10) : null;
+  }
+
+  function getSelectedOutcome4() {
+    const c = outcomeRadios4.find(r => r.checked);
+    return c ? c.value : null;
+  }
+
+  function onMode4Change() {
+    const mode = getSelectedMode4();
+    if (mode === 'partner') {
+      partnerRow4.classList.remove('hidden');
+      outcomeLabelWolf4.textContent = "Wolf's team won";
+      outcomeLabelOther4.textContent = 'Other team won';
+    } else {
+      partnerRow4.classList.add('hidden');
+      partnerRadios4.forEach(r => { r.checked = false; });
+      outcomeLabelWolf4.textContent = 'Wolf won';
+      outcomeLabelOther4.textContent = 'Others won';
+    }
+    outcomeRadios4.forEach(r => { r.checked = false; });
+    checkReady();
+  }
+
+  function computePoints4(mode, outcome, wolfIdx, partnerIdx) {
+    const points = [0, 0, 0, 0];
+    if (outcome === 'tie') return points;
+    if (mode === 'lone') {
+      if (outcome === 'wolf') {
+        points[wolfIdx] = 4;
+      } else {
+        [0, 1, 2, 3].forEach(i => { if (i !== wolfIdx) points[i] = 1; });
+      }
+    } else {
+      if (outcome === 'wolf') {
+        points[wolfIdx] = 2;
+        points[partnerIdx] = 2;
+      } else {
+        [0, 1, 2, 3].forEach(i => { if (i !== wolfIdx && i !== partnerIdx) points[i] = 3; });
+      }
+    }
+    return points;
+  }
+
+  modeRadios4.forEach(r => r.addEventListener('change', onMode4Change));
+  partnerRadios4.forEach(r => r.addEventListener('change', checkReady));
+  outcomeRadios4.forEach(r => r.addEventListener('change', checkReady));
+
+  // ---- shared ----
+
+  function checkReady() {
+    let ready;
+    if (state.mode === 3) {
+      ready = getSelectedChoice3() !== null && getSelectedOutcome3() !== null;
+    } else {
+      const mode4 = getSelectedMode4();
+      const outcome4 = getSelectedOutcome4();
+      ready = mode4 !== null && outcome4 !== null;
+      if (mode4 === 'partner') ready = ready && getSelectedPartner4() !== null;
+    }
+    addBtn.disabled = !ready;
+    return ready;
+  }
+
+  function resetHoleEntry() {
+    choiceRadios3.forEach(r => { r.checked = false; });
+    outcomeRadios3.forEach(r => { r.checked = false; });
+    modeRadios4.forEach(r => { r.checked = false; });
+    partnerRadios4.forEach(r => { r.checked = false; });
+    outcomeRadios4.forEach(r => { r.checked = false; });
+    partnerRow4.classList.add('hidden');
+    addBtn.disabled = true;
+  }
+
+  function flashScores() {
+    for (let i = 0; i < state.mode; i++) {
+      scoreInputs[i].classList.add('flash');
+      setTimeout(() => scoreInputs[i].classList.remove('flash'), 700);
+    }
+  }
+
+  function setMode(newMode) {
+    if (newMode === state.mode) return;
+    const hasProgress = state.players.some(p => p.score !== 0) || state.currentWolf !== 0;
+    if (hasProgress) {
+      const ok = confirm('Switching player count will reset the round. Continue?');
+      if (!ok) {
+        (state.mode === 3 ? countRadio3 : countRadio4).checked = true;
+        return;
+      }
+    }
+    const oldPlayers = state.players;
+    const newPlayers = [];
+    for (let i = 0; i < newMode; i++) {
+      newPlayers.push({
+        name: oldPlayers[i] ? oldPlayers[i].name : ('Player ' + (i + 1)),
+        score: 0
+      });
+    }
+    state.mode = newMode;
+    state.players = newPlayers;
+    state.currentWolf = 0;
+    lastAdd = null;
+    feedback.hidden = true;
+    resetHoleEntry();
+    renderModeVisibility();
+    applyStateToDOM();
+    scheduleSave();
+  }
+
+  countRadio3.addEventListener('change', () => { if (countRadio3.checked) setMode(3); });
+  countRadio4.addEventListener('change', () => { if (countRadio4.checked) setMode(4); });
+
+  nameInputs.forEach((inp, i) => {
+    inp.addEventListener('input', () => {
+      if (i >= state.mode) return;
+      const val = inp.value || ('Player ' + (i + 1));
+      state.players[i].name = val;
+      refreshRoleDisplays();
+      scheduleSave();
+    });
+  });
+
+  scoreInputs.forEach((inp, i) => {
+    inp.addEventListener('change', () => {
+      if (i >= state.mode) return;
+      const v = parseInt(inp.value, 10);
+      state.players[i].score = Number.isFinite(v) ? v : 0;
+      normalizeScores();
+      applyStateToDOM();
+      scheduleSave();
+    });
+  });
+
+  wolfIndicator.addEventListener('click', () => {
+    state.currentWolf = (state.currentWolf + 1) % state.mode;
+    resetHoleEntry();
+    applyStateToDOM();
+    scheduleSave();
+  });
+
+  addBtn.addEventListener('click', () => {
+    if (!checkReady()) return;
+    const wolfIdx = state.currentWolf;
+    let points, isTie;
+
+    if (state.mode === 3) {
+      const choice = getSelectedChoice3();
+      const outcome = getSelectedOutcome3();
+      const assignment = computeAssignment3(choice, wolfIdx);
+      points = computePoints3(assignment, outcome);
+      isTie = outcome === 'tie';
+    } else {
+      const mode4 = getSelectedMode4();
+      const outcome4 = getSelectedOutcome4();
+      const partnerIdx = mode4 === 'partner' ? getSelectedPartner4() : null;
+      points = computePoints4(mode4, outcome4, wolfIdx, partnerIdx);
+      isTie = outcome4 === 'tie';
+    }
+
+    lastAdd = { prevScores: state.players.map(p => p.score), prevWolf: state.currentWolf };
+    for (let i = 0; i < state.mode; i++) {
+      state.players[i].score += points[i];
+    }
+    normalizeScores();
+    state.currentWolf = (wolfIdx + 1) % state.mode;
+
+    applyStateToDOM();
+    flashScores();
+
+    let msg;
+    if (isTie) {
+      msg = (state.mode === 3 ? 'Hole tied, 2 points each.' : 'Hole tied, no points.') +
+        ' Wolf moves to ' + state.players[state.currentWolf].name + '.';
+    } else {
+      const gained = state.players
+        .map((p, i) => (points[i] > 0 ? p.name + ' +' + points[i] : null))
+        .filter(Boolean);
+      msg = 'Hole added: ' + gained.join(', ') + '. Wolf moves to ' + state.players[state.currentWolf].name + '.';
+    }
+    feedbackText.textContent = msg;
+    feedback.hidden = false;
+
+    resetHoleEntry();
+    scheduleSave();
+  });
+
+  undoBtn.addEventListener('click', () => {
+    if (!lastAdd) return;
+    state.players.forEach((p, i) => { p.score = lastAdd.prevScores[i]; });
+    state.currentWolf = lastAdd.prevWolf;
+    lastAdd = null;
+    applyStateToDOM();
+    feedback.hidden = true;
+    scheduleSave();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    const ok = confirm('Reset all scores to 0 and restart the Wolf rotation?');
+    if (!ok) return;
+    state.players.forEach(p => { p.score = 0; });
+    state.currentWolf = 0;
+    lastAdd = null;
+    feedback.hidden = true;
+    resetHoleEntry();
+    applyStateToDOM();
+    scheduleSave();
+  });
+
+  fullRender();
+  loadState();
+</script>
+
+</body>
+</html>
