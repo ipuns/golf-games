@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Split Sixes</title>
+<style>
+  :root {
+    --paper: #EAE3C9;
+    --paper-deep: #DDD1A8;
+    --felt: #142219;
+    --ink: #23301D;
+    --ink-soft: #4C5A3F;
+    --rule: #B7AD86;
+    --gold: #96692A;
+    --gold-ink: #FFF6E6;
+    --flash: #F0D695;
+    --ok: #3F6B3F;
+    --warn: #A13D2B;
+    --radius: 6px;
+    --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--felt);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 28px 16px 60px;
+  }
+
+  main.sheet {
+    width: 100%;
+    max-width: 420px;
+    background: var(--paper);
+    border-radius: var(--radius);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+    padding: 28px 24px 24px;
+  }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: 0.2px;
+  }
+
+  .tagline {
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  hr.rule {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 18px 0;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .row:last-child { border-bottom: none; }
+
+  .name {
+    flex: 1;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1px dotted transparent;
+    padding: 4px 0;
+    min-width: 0;
+  }
+
+  .name:focus {
+    outline: none;
+    border-bottom: 1px dotted var(--ink-soft);
+  }
+
+  .score {
+    width: 4.2rem;
+    text-align: right;
+    font-family: var(--font-serif);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    padding: 2px 0;
+    -moz-appearance: textfield;
+  }
+
+  .score::-webkit-outer-spin-button,
+  .score::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .score:focus {
+    outline: none;
+    border-bottom: 1px dotted var(--ink-soft);
+  }
+
+  .score.leader { color: var(--gold); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .score { transition: background-color 0.6s ease; }
+  }
+
+  .score.flash { background-color: var(--flash); }
+
+  h2 {
+    font-family: var(--font-sans);
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .hint {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+  }
+
+  .hole-row {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .hole-row:last-of-type { border-bottom: none; }
+
+  .hole-row-name {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+  }
+
+  .chips input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  .chips label {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--paper-deep);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .chips input:checked + label {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--gold-ink);
+  }
+
+  .chips input:focus-visible + label {
+    outline: 2px solid var(--ink);
+    outline-offset: 1px;
+  }
+
+  .hole-total {
+    margin: 14px 0 0;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+
+  .hole-total.ok { color: var(--ok); font-weight: 600; }
+  .hole-total.warn { color: var(--warn); }
+
+  button#add-hole {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold-ink);
+    background: var(--gold);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  button#add-hole:disabled {
+    background: #B7AD86;
+    color: #F4EFDD;
+    cursor: not-allowed;
+  }
+
+  button#add-hole:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  .feedback {
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  .link-inline {
+    font: inherit;
+    color: var(--gold);
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  details {
+    margin-top: 18px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  details summary {
+    cursor: pointer;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  details ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+  }
+
+  details li { margin-bottom: 4px; }
+
+  button#reset-btn {
+    display: block;
+    margin: 22px auto 0;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 6px;
+  }
+</style>
+</head>
+<body>
+
+<main class="sheet">
+  <header>
+    <h1>Split Sixes</h1>
+    <p class="tagline">Six points a hole. The trailing player stays at zero.</p>
+  </header>
+
+  <hr class="rule">
+
+  <section aria-label="Current standing">
+    <div class="row">
+      <input class="name" id="name-0" type="text" value="Player 1" aria-label="Player 1 name">
+      <input class="score" id="score-0" type="number" value="0" inputmode="numeric" aria-label="Player 1 score">
+    </div>
+    <div class="row">
+      <input class="name" id="name-1" type="text" value="Player 2" aria-label="Player 2 name">
+      <input class="score" id="score-1" type="number" value="0" inputmode="numeric" aria-label="Player 2 score">
+    </div>
+    <div class="row">
+      <input class="name" id="name-2" type="text" value="Player 3" aria-label="Player 3 name">
+      <input class="score" id="score-2" type="number" value="0" inputmode="numeric" aria-label="Player 3 score">
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <h2>Record this hole</h2>
+    <p class="hint">Tap the points each player earned this hole.</p>
+
+    <div class="hole-row">
+      <div class="hole-row-name" id="entryname-0">Player 1</div>
+      <div class="chips" role="radiogroup" aria-label="Player 1 points this hole">
+        <input type="radio" name="pts-0" id="pts-0-0" value="0"><label for="pts-0-0">0</label>
+        <input type="radio" name="pts-0" id="pts-0-1" value="1"><label for="pts-0-1">1</label>
+        <input type="radio" name="pts-0" id="pts-0-2" value="2"><label for="pts-0-2">2</label>
+        <input type="radio" name="pts-0" id="pts-0-3" value="3"><label for="pts-0-3">3</label>
+        <input type="radio" name="pts-0" id="pts-0-4" value="4"><label for="pts-0-4">4</label>
+      </div>
+    </div>
+
+    <div class="hole-row">
+      <div class="hole-row-name" id="entryname-1">Player 2</div>
+      <div class="chips" role="radiogroup" aria-label="Player 2 points this hole">
+        <input type="radio" name="pts-1" id="pts-1-0" value="0"><label for="pts-1-0">0</label>
+        <input type="radio" name="pts-1" id="pts-1-1" value="1"><label for="pts-1-1">1</label>
+        <input type="radio" name="pts-1" id="pts-1-2" value="2"><label for="pts-1-2">2</label>
+        <input type="radio" name="pts-1" id="pts-1-3" value="3"><label for="pts-1-3">3</label>
+        <input type="radio" name="pts-1" id="pts-1-4" value="4"><label for="pts-1-4">4</label>
+      </div>
+    </div>
+
+    <div class="hole-row">
+      <div class="hole-row-name" id="entryname-2">Player 3</div>
+      <div class="chips" role="radiogroup" aria-label="Player 3 points this hole">
+        <input type="radio" name="pts-2" id="pts-2-0" value="0"><label for="pts-2-0">0</label>
+        <input type="radio" name="pts-2" id="pts-2-1" value="1"><label for="pts-2-1">1</label>
+        <input type="radio" name="pts-2" id="pts-2-2" value="2"><label for="pts-2-2">2</label>
+        <input type="radio" name="pts-2" id="pts-2-3" value="3"><label for="pts-2-3">3</label>
+        <input type="radio" name="pts-2" id="pts-2-4" value="4"><label for="pts-2-4">4</label>
+      </div>
+    </div>
+
+    <p class="hole-total" id="hole-total">Select points for all three players.</p>
+
+    <button id="add-hole" disabled>Add to totals</button>
+
+    <p class="feedback" id="feedback" hidden>
+      <span id="feedback-text"></span>
+      <button class="link-inline" id="undo-btn">Undo</button>
+    </p>
+
+    <details>
+      <summary>How points are split</summary>
+      <ul>
+        <li>Lowest score: 4 points. Middle: 2. Highest: 0.</li>
+        <li>Two tie for lowest: 3 points each, the other gets 0.</li>
+        <li>Two tie for highest: the low scorer gets 4, the other two get 1 each.</li>
+        <li>All three tie: 2 points each.</li>
+      </ul>
+    </details>
+  </section>
+
+  <button id="reset-btn">Reset round</button>
+</main>
+
+<script>
+  const nameInputs = [0,1,2].map(i => document.getElementById('name-' + i));
+  const scoreInputs = [0,1,2].map(i => document.getElementById('score-' + i));
+  const entryNames = [0,1,2].map(i => document.getElementById('entryname-' + i));
+  const pointsGroups = [0,1,2].map(i => Array.from(document.getElementsByName('pts-' + i)));
+  const addBtn = document.getElementById('add-hole');
+  const holeTotal = document.getElementById('hole-total');
+  const feedback = document.getElementById('feedback');
+  const feedbackText = document.getElementById('feedback-text');
+  const undoBtn = document.getElementById('undo-btn');
+  const resetBtn = document.getElementById('reset-btn');
+
+  let state = {
+    players: [
+      { name: 'Player 1', score: 0 },
+      { name: 'Player 2', score: 0 },
+      { name: 'Player 3', score: 0 }
+    ]
+  };
+  let lastAdd = null;
+  let saveTimer = null;
+
+  function applyStateToDOM() {
+    for (let i = 0; i < 3; i++) {
+      nameInputs[i].value = state.players[i].name;
+      scoreInputs[i].value = state.players[i].score;
+      entryNames[i].textContent = state.players[i].name;
+    }
+    updateLeaderHighlight();
+  }
+
+  function updateLeaderHighlight() {
+    const scores = state.players.map(p => p.score);
+    const max = Math.max(...scores);
+    const allSame = scores.every(s => s === max);
+    for (let i = 0; i < 3; i++) {
+      const isLeader = !allSame && scores[i] === max && max > 0;
+      scoreInputs[i].classList.toggle('leader', isLeader);
+    }
+  }
+
+  function normalizeScores() {
+    const scores = state.players.map(p => p.score);
+    const min = Math.min(...scores);
+    if (min !== 0) {
+      state.players.forEach(p => { p.score -= min; });
+    }
+  }
+
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveState, 300);
+  }
+
+  function saveState() {
+    const data = JSON.stringify(state);
+    if (window.storage) {
+      window.storage.set('state', data, false).catch(e => {
+        console.error('Split Sixes: could not save state', e);
+      });
+      return;
+    }
+    try {
+      localStorage.setItem('split-sixes-state', data);
+    } catch (e) {
+      console.error('Split Sixes: could not save state', e);
+    }
+  }
+
+  function applyLoadedState(raw) {
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.players) && parsed.players.length === 3) {
+      state = parsed;
+      applyStateToDOM();
+    }
+  }
+
+  async function loadState() {
+    if (window.storage) {
+      try {
+        const res = await window.storage.get('state', false);
+        if (res && res.value) applyLoadedState(res.value);
+      } catch (e) {
+        // nothing saved yet
+      }
+      return;
+    }
+    try {
+      const raw = localStorage.getItem('split-sixes-state');
+      if (raw) applyLoadedState(raw);
+    } catch (e) {
+      // nothing saved yet
+    }
+  }
+
+  function getSelectedPoints() {
+    return pointsGroups.map(group => {
+      const checked = group.find(r => r.checked);
+      return checked ? parseInt(checked.value, 10) : null;
+    });
+  }
+
+  function updateHoleTotal() {
+    const vals = getSelectedPoints();
+    const allSelected = vals.every(v => v !== null);
+    holeTotal.classList.remove('ok', 'warn');
+    if (!allSelected) {
+      holeTotal.textContent = 'Select points for all three players.';
+      addBtn.disabled = true;
+      return;
+    }
+    const sum = vals.reduce((a, b) => a + b, 0);
+    holeTotal.textContent = 'Points this hole: ' + sum + ' / 6';
+    holeTotal.classList.add(sum === 6 ? 'ok' : 'warn');
+    addBtn.disabled = sum !== 6;
+  }
+
+  pointsGroups.flat().forEach(r => r.addEventListener('change', updateHoleTotal));
+
+  function clearHoleSelections() {
+    pointsGroups.flat().forEach(r => { r.checked = false; });
+    updateHoleTotal();
+  }
+
+  function flashScores() {
+    for (let i = 0; i < 3; i++) {
+      scoreInputs[i].classList.add('flash');
+      setTimeout(() => scoreInputs[i].classList.remove('flash'), 700);
+    }
+  }
+
+  nameInputs.forEach((inp, i) => {
+    inp.addEventListener('input', () => {
+      const val = inp.value || ('Player ' + (i + 1));
+      state.players[i].name = val;
+      entryNames[i].textContent = val;
+      scheduleSave();
+    });
+  });
+
+  scoreInputs.forEach((inp, i) => {
+    inp.addEventListener('change', () => {
+      const v = parseInt(inp.value, 10);
+      state.players[i].score = Number.isFinite(v) ? v : 0;
+      normalizeScores();
+      applyStateToDOM();
+      scheduleSave();
+    });
+  });
+
+  addBtn.addEventListener('click', () => {
+    const vals = getSelectedPoints();
+    if (vals.some(v => v === null) || vals.reduce((a, b) => a + b, 0) !== 6) return;
+    lastAdd = { prevScores: state.players.map(p => p.score) };
+    for (let i = 0; i < 3; i++) {
+      state.players[i].score += vals[i];
+    }
+    normalizeScores();
+    applyStateToDOM();
+    flashScores();
+    const parts = state.players.map((p, i) => p.name + ' +' + vals[i]);
+    feedbackText.textContent = 'Hole added: ' + parts.join(', ') + '. ';
+    feedback.hidden = false;
+    clearHoleSelections();
+    scheduleSave();
+  });
+
+  undoBtn.addEventListener('click', () => {
+    if (!lastAdd) return;
+    state.players.forEach((p, i) => { p.score = lastAdd.prevScores[i]; });
+    lastAdd = null;
+    applyStateToDOM();
+    feedback.hidden = true;
+    scheduleSave();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    const ok = confirm('Reset all scores to 0 for a new round?');
+    if (!ok) return;
+    state.players.forEach(p => { p.score = 0; });
+    lastAdd = null;
+    feedback.hidden = true;
+    clearHoleSelections();
+    applyStateToDOM();
+    scheduleSave();
+  });
+
+  applyStateToDOM();
+  loadState();
+</script>
+
+</body>
+</html>
