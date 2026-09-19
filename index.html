@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Golf Games</title>
+<style>
+  :root {
+    --paper: #EAE3C9;
+    --felt: #142219;
+    --ink: #23301D;
+    --gold: #96692A;
+    --gold-ink: #FFF6E6;
+    --radius: 6px;
+    --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--felt);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  main {
+    width: 100%;
+    max-width: 500px;
+    background: var(--paper);
+    border-radius: var(--radius);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+    padding: 40px 32px;
+    text-align: center;
+  }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+    letter-spacing: 0.2px;
+  }
+
+  p {
+    font-size: 1rem;
+    color: var(--ink);
+    margin: 0 0 32px;
+    line-height: 1.6;
+  }
+
+  .games {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  a.game-link {
+    display: block;
+    padding: 20px;
+    background: var(--gold);
+    color: var(--gold-ink);
+    text-decoration: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: background-color 0.2s ease;
+  }
+
+  a.game-link:hover {
+    background: #7A5522;
+  }
+
+  a.game-link:active {
+    transform: scale(0.98);
+  }
+
+  .game-name {
+    display: block;
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+  }
+
+  .game-desc {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <h1>Golf Games</h1>
+  <p>Simple score trackers for popular golf games. Choose one below to get started.</p>
+
+  <div class="games">
+    <a href="split-6.html" class="game-link">
+      <span class="game-name">Split Sixes</span>
+      <span class="game-desc">3 players · 6 points per hole</span>
+    </a>
+
+    <a href="wulf.html" class="game-link">
+      <span class="game-name">Wolf</span>
+      <span class="game-desc">3 or 4 players · One Wolf each hole</span>
+    </a>
+  </div>
+</main>
+
+</body>
+</html>
